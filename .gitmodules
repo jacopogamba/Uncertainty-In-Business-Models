@@ -1,0 +1,3 @@
+[submodule "lixely"]
+	path = lixely
+	url = https://github.com/pqnet/lixely.git
