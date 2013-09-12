@@ -1,5 +1,7 @@
 *.suo
 */bin/**/*
 */obj/**/*
+*/*/bin/**/*
+*/*/obj/**/*
 Backup/
-*/packages/**
+*/packages/*/**
