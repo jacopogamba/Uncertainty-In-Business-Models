@@ -49,6 +49,7 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="PotenzialeDiVendita.fsx" />
     <None Include="Script1.fsx" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
