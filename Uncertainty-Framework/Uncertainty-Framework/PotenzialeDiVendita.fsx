@@ -78,3 +78,49 @@ Dist.getSampleSeq (getDist (rndvar{let! s = sesso in let! e =eta in return dist{
     Seq.groupBy fst |>
     Seq.map (fun (sesso,sequenza) -> contaPerEta sequenza|> Seq.sort |>Chart.Column)|>Chart.Combine //match sesso with Maschio -> "maschio"| Femmina -> "femmina") |>
     
+
+let etaprobcellulareM = [ 5,0.0; 10,0.02; 15,0.28; 20,0.8; 25,0.9; 30,0.9; 35, 0.9; 40, 0.9; 45,0.85; 50,0.8;55,0.75;60,0.6;65,0.3;70,0.2;75,0.1;80,0.0;85,0.0;10000,0.0]
+let etaprobcellulareF = [ 5,0.0; 10,0.02; 15,0.30; 20,0.8; 25,0.9; 30,0.9; 35, 0.9; 40, 0.9; 45,0.85; 50,0.8;55,0.75;60,0.6;65,0.3;70,0.2;75,0.1;80,0.0;85,0.0;10000,0.0]
+
+let smartphone = rndvar {
+    let! sesso = sesso
+    let tabella = match sesso with Maschio -> etaprobcellulareM | Femmina -> etaprobcellulareF
+    let! eta = eta
+    let _,probabilita = Seq.find (fun (fascia,_) ->  fascia>eta ) tabella
+    return dist {
+        let! u = Dist.uniform
+        return u < probabilita
+    }
+}
+
+let rec smartphoneeta etaMin etaMax = 
+    let smartphoneEta = getDist (rndvar {
+        let! s = smartphone
+        let! e = eta
+        return dist { return s,e }
+        })
+    dist {
+        let! s,e = smartphoneEta
+        if e >= etaMin && e < etaMax then
+            return s
+        else
+            let! s = smartphoneeta etaMin etaMax
+            return s       
+    }
+
+let rec etaSmartphone () = 
+    let smartphoneEta = getDist (rndvar {
+        let! s = smartphone
+        let! e = eta
+        return dist { return s,e }
+        })
+    dist {
+        let! s,e = smartphoneEta
+        if s then
+            return e
+        else
+            let! e = etaSmartphone ()
+            return e   
+    }
+Dist.getSampleSeq ( smartphoneeta 60 100) (gen()) |> Seq.take 304280 |> Seq.countBy (fun (x:bool) -> if x then "Hanno lo smartphone" else "Non ce l'hanno" ) |> Chart.Pie
+Dist.getSampleSeq ( etaSmartphone ()) (gen()) |> Seq.take 304280 |> Seq.countBy (fun x -> x ) |> Chart.Column
