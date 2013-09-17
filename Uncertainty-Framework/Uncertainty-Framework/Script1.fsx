@@ -196,3 +196,52 @@ let rec chivince carrarmatiAttacco carrarmatiDifesa = dist {
 Dist.getSampleSeq (chivince 10 3) (gen()) |> Seq.take 1000 |> Seq.countBy (fun x -> x) |> Seq.sortBy fst |> Chart.Column
 
 Dist.getSampleSeq (dadi 3) (gen()) |> Seq.take 5 |> Seq.toList
+
+
+type Facce =
+    | Testa
+    | Croce
+
+let moneta = dist {
+    let! u = Dist.uniform
+    if u > 0.5 then return Testa else return Croce
+    }
+
+let Monete =
+    let Moneta1 = rndvar { return moneta }
+    let Moneta2 = rndvar { return moneta }
+    let Moneta3 = rndvar { return moneta }
+    rndvar {
+        let! m1 = Moneta1
+        let! m2 = Moneta2
+        let! m3 = Moneta3
+        return dist { return m1,m2,m3 }
+    }
+
+let Moneta1 = rndvar {
+    let! foglietto = Monete
+    let m1, m2,m3 = foglietto
+    return dist { return m1 }
+    }
+
+let Moneta2 = rndvar {
+    let! foglietto = Monete
+    let m1, m2,m3 = foglietto
+    return dist { return m2 }
+    }
+
+let MonetaUguale = rndvar {
+    let! m1 = Moneta1
+    let! m2 = Moneta2
+    return dist { return  m1 = m2 }
+    }
+
+Dist.getSampleSeq ( getDist MonetaUguale ) (gen()) |> Seq.take 1000 |> Seq.countBy (fun x -> x) |>  Chart.Pie
+
+
+let f = fun x -> match x with None -> false | _ -> true
+let f1 = function None -> false | Some x -> true
+
+type Option<'T> =
+    | Some of 'T
+    | None
