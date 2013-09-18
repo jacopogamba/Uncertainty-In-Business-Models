@@ -261,7 +261,17 @@ Dist.getSampleSeq (getDist scaricaApplicazione) (gen())
 
 //Dist.getSampleSeq ( getDist stressed) (gen()) |> Seq.take 1000000 |> Seq.countBy (fun (x:bool) -> if x then "Stressati" else "Tranquilli" ) |> Chart.Pie
 
+let printCSVPerEta (filename:string) (serie) =
+    let sb = new System.Text.StringBuilder()
+    sb.AppendLine("eta\tcount") |> ignore
+    serie |> Seq.iter (fun (e,c) -> sb.AppendLine("" + e.ToString() + "\t" + c.ToString()) |> ignore) 
+    System.IO.File.WriteAllText(filename, sb.ToString())
+    //System.Console.Write(sb.ToString())
 
+
+let test = Dist.getSampleSeq (getDist scaricaApplicazione) (gen())|> Seq.take 1000000 |> Seq.filter (function None -> false | _ -> true)  |> Seq.countBy (fun x ->2 * ( x.Value /2) )
+
+printCSVPerEta @"C:\Users\pq\Desktop\scaricaApplicazione.csv" test
 
 let compraPerEta conteggio =
     let compraEta = rndvar {
