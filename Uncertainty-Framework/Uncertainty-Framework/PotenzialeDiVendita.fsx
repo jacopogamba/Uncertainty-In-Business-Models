@@ -1,8 +1,8 @@
-﻿#I @"C:\Users\pq\Documents\GitHub\Uncertainty-In-Business-Models\lixely\lixely-fsharp\bin\Release"
+﻿#I @"C:\Users\JACOPO\Documents\GitHub\Uncertainty-In-Business-Models\lixely\lixely-fsharp\bin\Release"
 #r @"RandomTools.dll"
 #r @"distr.dll"
 
-#load @"C:\Users\pq\Documents\GitHub\Uncertainty-In-Business-Models\Uncertainty-Framework\packages\FSharp.Charting.0.84/FSharp.Charting.fsx"
+#load @"C:\Users\JACOPO\Documents\GitHub\Uncertainty-In-Business-Models\Uncertainty-Framework\packages\FSharp.Charting.0.84/FSharp.Charting.fsx"
 
 open FSharp.Charting
 open Distributions
@@ -51,6 +51,8 @@ let sesso,eta =
         let fascia, (maxmaschi, maxfemmine) = Seq.find (fun (fascia,(m,f)) -> if f>n then true else false) demograficacumulativa
         let sesso = if n<maxmaschi then Maschio else Femmina
         sesso,fascia
+
+//http://www.census.gov/population/age/data/2010comp.html
 
     let sessoeta = rndvar {
         return dist {
@@ -120,6 +122,10 @@ let smartphone = rndvar {
     }
 }
 
+//http://pewinternet.org/Reports/2013/Smartphone-Ownership-2013/Findings.aspx
+//http://www.statista.com/statistics/272571/age-distribution-of-smartphone-owners-in-the-united-states/
+
+
 let rec smartphoneeta etaMin etaMax = 
     let smartphoneEta = getDist (rndvar {
         let! s = smartphone
@@ -177,6 +183,13 @@ let stressed = rndvar {
     }
 }
 
+//http://www.apa.org/news/press/releases/stress/2011/impact.pdf
+//http://www.apa.org/news/press/releases/stress/2011/impact.aspx
+//http://www.psy.cmu.edu/~scohen/Whos_Stressed_JASP_2012.pdf
+
+
+
+
 //let propensioneAllAcquisto = rndvar {
 //    let rec arrotonda_percentuale m v = dist {
 //        let! normale = Dist.normal m v
@@ -226,8 +239,41 @@ let fanBieber = rndvar {
         //return if u < p then Some eta else None
     }
 }
+
 //Dist.getSampleSeq (getDist fanBieber) (gen())|> Seq.take 1000000 |> Seq.filter (function None -> false | _ -> true)  |> Seq.countBy (fun x ->2 * ( x.Value /2) ) |> Chart.Column
 //Dist.getSampleSeq (getDist fanBieber) (gen())|> Seq.take 1000000 |> Seq.average
+
+
+let fanBieberPerEta = rndvar {
+    let! eta = eta
+    let! fanBieber=fanBieber
+    return dist {return if fanBieber then Some eta else None }
+}
+
+
+let fanSmith = rndvar {
+    let! eta = eta
+    return dist {
+        let! u = Dist.uniform
+        let p = match eta with 
+                | e when e < 5 -> 0.001
+                | e when e < 10 -> 0.03
+                | e when e < 15 -> 0.08
+                | e when e < 20 -> 0.3                
+                | e when e < 25 -> 0.3
+                | e when e < 30 -> 0.25
+                | e when e < 35 -> 0.2
+                | e when e < 45 -> 0.15
+                | e when e < 55 -> 0.1
+                | e when e < 65 -> 0.005
+                | _             -> 0.0001
+      //return u < p
+        return if u < p then Some eta else None
+    }
+}
+
+Dist.getSampleSeq (getDist fanSmith) (gen())|> Seq.take 3000000 |> Seq.filter (function None -> false | _ -> true)  |> Seq.countBy (fun x ->2 * ( x.Value /2) ) |> Chart.Column
+//trovate info da google sui siti dei fan club e come su Justin Bieber info da Facebook (51 mln di like e fascia d'età dove è più popolare dai 18 ai 24)
 
 let scaricaApplicazione = rndvar {
     let! smartphone = smartphone
@@ -261,7 +307,8 @@ Dist.getSampleSeq (getDist scaricaApplicazione) (gen())
 
 //Dist.getSampleSeq ( getDist stressed) (gen()) |> Seq.take 1000000 |> Seq.countBy (fun (x:bool) -> if x then "Stressati" else "Tranquilli" ) |> Chart.Pie
 
-let printCSVPerEta (filename:string) (serie) =
+let printCSVPerEta (filename:string) (distribuzio) =
+    let serie = Dist.getSampleSeq (getDist distribuzio) (gen())|> Seq.take 1000000 |> Seq.filter (function None -> false | _ -> true) |> Seq.countBy (fun x ->2 * ( x.Value /2) ) |> Seq.map (fun (e,c) -> e,c*300) |> Seq.sortBy fst
     let sb = new System.Text.StringBuilder()
     sb.AppendLine("eta\tcount") |> ignore
     serie |> Seq.iter (fun (e,c) -> sb.AppendLine("" + e.ToString() + "\t" + c.ToString()) |> ignore) 
@@ -269,13 +316,12 @@ let printCSVPerEta (filename:string) (serie) =
     //System.Console.Write(sb.ToString())
 
 
-let test = Dist.getSampleSeq (getDist scaricaApplicazione) (gen())|> Seq.take 1000000 |> Seq.filter (function None -> false | _ -> true)  |> Seq.countBy (fun x ->2 * ( x.Value /2) )
 
-printCSVPerEta @"C:\Users\pq\Desktop\scaricaApplicazione.csv" test
+printCSVPerEta @"C:\Users\JACOPO\Desktop\scaricaApplicazione.csv" fanBieberPerEta 
 
 let compraPerEta conteggio =
     let compraEta = rndvar {
-        let! compra = compraApplicazione
+        let! compra = scaricaApplicazione
         let! eta = eta
         return dist { return compra,eta }
         }
