@@ -241,7 +241,7 @@ let fanBieber = rndvar {
 }
 
 //Dist.getSampleSeq (getDist fanBieber) (gen())|> Seq.take 1000000 |> Seq.filter (function None -> false | _ -> true)  |> Seq.countBy (fun x ->2 * ( x.Value /2) ) |> Chart.Column
-//Dist.getSampleSeq (getDist fanBieber) (gen())|> Seq.take 1000000 |> Seq.average
+Dist.getSampleSeq (getDist fanBieber) (gen())|> Seq.take 1000000 |> Seq.map (fun x -> if x = true then 1.0 else 0.0) |> Seq.average
 
 
 let fanBieberPerEta = rndvar {
@@ -267,43 +267,47 @@ let fanSmith = rndvar {
                 | e when e < 55 -> 0.1
                 | e when e < 65 -> 0.005
                 | _             -> 0.0001
-      //return u < p
-        return if u < p then Some eta else None
+        return u < p
+        //return if u < p then Some eta else None
     }
 }
 
-Dist.getSampleSeq (getDist fanSmith) (gen())|> Seq.take 3000000 |> Seq.filter (function None -> false | _ -> true)  |> Seq.countBy (fun x ->2 * ( x.Value /2) ) |> Chart.Column
+//Dist.getSampleSeq (getDist fanSmith) (gen())|> Seq.take 1000000 |> Seq.map (fun x -> if x then 0.0 else 1.0) |> Seq.average
+
+//Dist.getSampleSeq (getDist fanSmith) (gen())|> Seq.take 3000000 |> Seq.filter (function None -> false | _ -> true)  |> Seq.countBy (fun x ->2 * ( x.Value /2) ) |> Chart.Column
 //trovate info da google sui siti dei fan club e come su Justin Bieber info da Facebook (51 mln di like e fascia d'età dove è più popolare dai 18 ai 24)
 
 let scaricaApplicazione = rndvar {
     let! smartphone = smartphone
-    if not smartphone then return dist { return None }
+    if not smartphone then return dist { return false }
     else
         let! eta = eta
         let! fanBieber = fanBieber
         let! fanChopra = fanChopra
+        let! fanSmith = fanSmith
         let! stressed = stressed
         let! stressLevel = stressLevel
         let prob = match eta with
-                    | e when e < 10 -> 0.0001 + if fanBieber then 0.1 else 0.0 + if fanChopra then 0.1 else 0.0
-                    | e when e < 15 -> 0.001 + if stressed then 0.01 else 0.0 + if fanBieber then 0.2 else 0.0 + if fanChopra then 0.25 else 0.0
-                    | e when e < 20 -> 0.002 + if stressed then 0.03 else 0.0 + if fanBieber then 0.2 else 0.0 + if fanChopra then 0.25 else 0.0
-                    | e when e < 25 -> 0.003 + if stressed then 0.05 else 0.0 + if fanBieber then 0.25 else 0.0 + if fanChopra then 0.25 else 0.0
-                    | e when e < 35 -> 0.0025 + if stressed then 0.05 else 0.0 + if fanBieber then 0.20 else 0.0 + if fanChopra then 0.25 else 0.0
-                    | e when e < 45 -> 0.0015 + if stressed then 0.1 else 0.0 + if fanBieber then 0.10 else 0.0 + if fanChopra then 0.25 else 0.0
-                    | _ -> 0.001 + if stressed then 0.1 else 0.0 + if fanBieber then 0.10 else 0.0 + if fanChopra then 0.25 else 0.0
+                    | e when e < 10 -> 0.0001 +                                  if fanBieber then 0.1 else 0.0  + if fanChopra then 0.1 else 0.0  + if fanSmith then 0.08 else 0.0
+                    | e when e < 15 -> 0.001  + if stressed then 0.01 else 0.0 + if fanBieber then 0.2 else 0.0  + if fanChopra then 0.25 else 0.0 + if fanSmith then 0.15 else 0.0  
+                    | e when e < 20 -> 0.002  + if stressed then 0.03 else 0.0 + if fanBieber then 0.2 else 0.0  + if fanChopra then 0.25 else 0.0 + if fanSmith then 0.15 else 0.0  
+                    | e when e < 25 -> 0.003  + if stressed then 0.05 else 0.0 + if fanBieber then 0.25 else 0.0 + if fanChopra then 0.25 else 0.0 + if fanSmith then 0.20 else 0.0 
+                    | e when e < 35 -> 0.0025 + if stressed then 0.05 else 0.0 + if fanBieber then 0.20 else 0.0 + if fanChopra then 0.25 else 0.0 + if fanSmith then 0.15 else 0.0 
+                    | e when e < 45 -> 0.0015 + if stressed then 0.1 else 0.0  + if fanBieber then 0.10 else 0.0 + if fanChopra then 0.25 else 0.0 + if fanSmith then 0.1 else 0.0 
+                    | _ -> 0.001 +              if stressed then 0.1 else 0.0  + if fanBieber then 0.10 else 0.0 + if fanChopra then 0.25 else 0.0 + if fanSmith then 0.1 else 0.0 
         return dist {
             let! u = Dist.uniform
-            return if u < prob then Some eta else None
+            //return if u < prob then Some eta else None
+            return u < prob
         }
 }
 
-Dist.getSampleSeq (getDist scaricaApplicazione) (gen())
-    |> Seq.take 3040000
-    |> Seq.filter (function None -> false | _ -> true)
-    |> Seq.countBy (fun x ->5 * ( x.Value /5) )
-    |> Seq.map (fun (x,y) -> x, y*100)
-    |> Chart.Column
+//Dist.getSampleSeq (getDist scaricaApplicazione) (gen())
+//    |> Seq.take 3040000
+//    |> Seq.filter (function None -> false | _ -> true)
+//    |> Seq.countBy (fun x ->5 * ( x.Value /5) )
+//    |> Seq.map (fun (x,y) -> x, y*100)
+//    |> Chart.Column
 
 //Dist.getSampleSeq ( getDist stressed) (gen()) |> Seq.take 1000000 |> Seq.countBy (fun (x:bool) -> if x then "Stressati" else "Tranquilli" ) |> Chart.Pie
 
@@ -319,18 +323,116 @@ let printCSVPerEta (filename:string) (distribuzio) =
 
 printCSVPerEta @"C:\Users\JACOPO\Desktop\scaricaApplicazione.csv" fanBieberPerEta 
 
-let compraPerEta conteggio =
-    let compraEta = rndvar {
-        let! compra = scaricaApplicazione
+//let compraPerEta conteggio =
+//    let compraEta = rndvar {
+//        let! compra = scaricaApplicazione
+//        let! eta = eta
+//        return dist { return compra,eta }
+//        }
+//    let totpersoneusa = 304280 * 1000
+//    let rec utenti rimasti = dist {
+//        let! compra,eta = getDist compraEta
+//        return if compra then Some eta else None
+//        }
+//    Dist.getSampleSeq utenti (gen()) |> Seq.take conteggio |> Seq.filter (function None -> false | _ -> true) |> Seq.countBy (fun  x -> 5 * int (0.2 * float x.Value) ) |> Seq.map (fun (eta,i) -> eta,(float i) * (float totpersoneusa )/ (float conteggio) ) 
+//
+//
+//Chart.Column (compraPerEta 1000000)
+
+let premium3mesi = rndvar {
+    let! scaricaApplicazione = scaricaApplicazione
+    if not scaricaApplicazione then 
+        return dist {return false}
+    else 
         let! eta = eta
-        return dist { return compra,eta }
-        }
-    let totpersoneusa = 304280 * 1000
-    let rec utenti rimasti = dist {
-        let! compra,eta = getDist compraEta
-        return if compra then Some eta else None
-        }
-    Dist.getSampleSeq utenti (gen()) |> Seq.take conteggio |> Seq.filter (function None -> false | _ -> true) |> Seq.countBy (fun  x -> 5 * int (0.2 * float x.Value) ) |> Seq.map (fun (eta,i) -> eta,(float i) * (float totpersoneusa )/ (float conteggio) ) 
+        let probab = 
+            if eta > 18 then 0.01
+            else 0.003
+        return dist {
+            let! u= Dist.uniform
+            return u < probab
+            }
+ }
+
+let premium6mesi = rndvar {
+    let! scaricaApplicazione = scaricaApplicazione
+    if not scaricaApplicazione then 
+        return dist {return false}
+    else 
+        let! premium3mesi = premium3mesi
+        if premium3mesi then 
+            return dist {
+                let! u= Dist.uniform
+                return u > 0.4
+            }
+        else 
+            let! eta = eta
+            let probab = 
+                if eta > 18 then 0.02
+                else 0.006
+            return dist {
+                let! u= Dist.uniform
+                return u < probab
+                }
+    }
+
+let premium9mesi = rndvar {
+    let! scaricaApplicazione = scaricaApplicazione
+    if not scaricaApplicazione then 
+        return dist {return false}
+    else 
+        let! premium6mesi = premium6mesi
+        if premium6mesi then 
+            return dist {
+                let! u= Dist.uniform
+                return u > 0.2
+            }
+        else 
+            let! eta = eta
+            let probab = 
+                if eta > 18 then 0.015
+                else 0.009
+            return dist {
+                let! u= Dist.uniform
+                return u < probab
+                }
+    }
 
 
-Chart.Column (compraPerEta 1000000)
+let premium12mesi = rndvar {
+    let! scaricaApplicazione = scaricaApplicazione
+    if not scaricaApplicazione then 
+        return dist {return false}
+    else 
+        let! premium9mesi = premium9mesi
+        if premium9mesi then 
+            return dist {
+                let! u= Dist.uniform
+                return u > 0.15
+            }
+        else 
+            let! eta = eta
+            let probab = 
+                if eta > 18 then 0.01
+                else 0.008
+            return dist {
+                let! u= Dist.uniform
+                return u < probab
+                }
+    }
+
+let graficotempo = rndvar {
+    let!premium3mesi = premium3mesi
+    let!premium6mesi = premium6mesi
+    let!premium9mesi = premium9mesi
+    let!premium12mesi = premium12mesi
+    let storia = [premium3mesi; premium6mesi; premium9mesi; premium12mesi]
+    return dist {return storia}
+}
+
+Dist.getSampleSeq (getDist graficotempo) (gen()) |> Seq.take 3000000 
+    |> Seq.fold (fun s x -> 
+        List.zip s x 
+            |> List.map (fun (tot,cur) -> 
+                if cur then tot + 1 else tot)) [0; 0; 0; 0] |> List.map (fun x -> x*100)
+    |> Chart.Column
