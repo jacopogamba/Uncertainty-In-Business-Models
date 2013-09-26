@@ -339,9 +339,111 @@ printCSVPerEta @"C:\Users\JACOPO\Desktop\scaricaApplicazione.csv" fanBieberPerEt
 //
 //Chart.Column (compraPerEta 1000000)
 
-let premium3mesi = rndvar {
+
+let free3mesi = rndvar {
     let! scaricaApplicazione = scaricaApplicazione
     if not scaricaApplicazione then 
+        return dist {return false}
+    else 
+        let! eta = eta
+        let probab = 
+            if eta > 18 then 0.25
+            else 0.35
+        return dist {
+            let! u= Dist.uniform
+            return u < probab
+            }
+ }
+
+let free6mesi = rndvar {
+    let! scaricaApplicazione = scaricaApplicazione
+    if not scaricaApplicazione then 
+        return dist {return false}
+    else 
+        let! free3mesi = free3mesi
+        if free3mesi then 
+            return dist {
+                let! u= Dist.uniform
+                return u > 0.05
+            }
+        else 
+            let! eta = eta
+            let probab = 
+                if eta > 18 then 0.2
+                else 0.3
+            return dist {
+                let! u= Dist.uniform
+                return u < probab
+                }
+    }
+
+let free9mesi = rndvar {
+    let! scaricaApplicazione = scaricaApplicazione
+    if not scaricaApplicazione then 
+        return dist {return false}
+    else 
+        let! free6mesi = free6mesi
+        if free6mesi then 
+            return dist {
+                let! u= Dist.uniform
+                return u > 0.1
+            }
+        else 
+            let! eta = eta
+            let probab = 
+                if eta > 18 then 0.1
+                else 0.05
+            return dist {
+                let! u= Dist.uniform
+                return u < probab
+                }
+    }
+
+
+let free12mesi = rndvar {
+    let! scaricaApplicazione = scaricaApplicazione
+    if not scaricaApplicazione then 
+        return dist {return false}
+    else 
+        let! free9mesi = free9mesi
+        if free9mesi then 
+            return dist {
+                let! u= Dist.uniform
+                return u > 0.1
+            }
+        else 
+            let! eta = eta
+            let probab = 
+                if eta > 18 then 0.1
+                else 0.02
+            return dist {
+                let! u= Dist.uniform
+                return u < probab
+                }
+    }
+
+
+let graficotempofree = rndvar {
+    let!free3mesi = free3mesi
+    let!free6mesi = free6mesi
+    let!free9mesi = free9mesi
+    let!free12mesi = free12mesi
+    let storia = [free3mesi; free6mesi; free9mesi; free12mesi]
+    return dist {return storia}
+}
+
+Dist.getSampleSeq (getDist graficotempofree) (gen()) |> Seq.take 300000 
+    |> Seq.fold (fun s x -> 
+        List.zip s x 
+            |> List.map (fun (tot,cur) -> 
+                if cur then tot + 1 else tot)) [0; 0; 0; 0] |> List.map (fun x -> x*100)
+    |> Chart.Column
+
+
+
+let premium3mesi = rndvar {
+    let! free3mesi = free3mesi
+    if not free3mesi then 
         return dist {return false}
     else 
         let! eta = eta
@@ -355,8 +457,8 @@ let premium3mesi = rndvar {
  }
 
 let premium6mesi = rndvar {
-    let! scaricaApplicazione = scaricaApplicazione
-    if not scaricaApplicazione then 
+    let! free6mesi = free6mesi
+    if not free6mesi then 
         return dist {return false}
     else 
         let! premium3mesi = premium3mesi
@@ -377,8 +479,8 @@ let premium6mesi = rndvar {
     }
 
 let premium9mesi = rndvar {
-    let! scaricaApplicazione = scaricaApplicazione
-    if not scaricaApplicazione then 
+    let! free9mesi = free9mesi
+    if not free9mesi then 
         return dist {return false}
     else 
         let! premium6mesi = premium6mesi
@@ -400,8 +502,8 @@ let premium9mesi = rndvar {
 
 
 let premium12mesi = rndvar {
-    let! scaricaApplicazione = scaricaApplicazione
-    if not scaricaApplicazione then 
+    let! free12mesi = free12mesi
+    if not free12mesi then 
         return dist {return false}
     else 
         let! premium9mesi = premium9mesi
@@ -430,9 +532,11 @@ let graficotempo = rndvar {
     return dist {return storia}
 }
 
-Dist.getSampleSeq (getDist graficotempo) (gen()) |> Seq.take 3000000 
+Dist.getSampleSeq (getDist graficotempo) (gen()) |> Seq.take 300000 
     |> Seq.fold (fun s x -> 
         List.zip s x 
             |> List.map (fun (tot,cur) -> 
                 if cur then tot + 1 else tot)) [0; 0; 0; 0] |> List.map (fun x -> x*100)
     |> Chart.Column
+
+
